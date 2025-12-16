@@ -1,2 +1,114 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+import random
+import time
+
+# 1. CONFIGURAREA PROBLEMEI (Date de intrare)
+
+SKILL_NAMES = ["Revizii", "Electronica", "Motor", "Caroserie"]
+
+def get_date_manuale():
+    mecanici_noi = []
+    tasks_noi = []
+
+    # Skill-uri: 0=Revizii, 1=Electronica, 2=Motor, 3=Caroserie
+    # NIVEL: 1=Incepator, 2=Mediu, 3=Expert
+    mecanici_noi = [
+        # --- EXPERTI (Scumpi) ---
+        {"id": 0, "nume": "Nea Ion (Sef)",   "skill": [0, 1, 2, 3], "nivel": 3, "cost": 150, "max_ore": 8},
+        {"id": 1, "nume": "Ing. Costel",     "skill": [1, 2],       "nivel": 3, "cost": 120, "max_ore": 8},
+
+        # --- SPECIALISTI (Medii) ---
+        {"id": 2, "nume": "Gigi Motor",      "skill": [0, 2],       "nivel": 2, "cost": 80,  "max_ore": 8},
+        {"id": 3, "nume": "Alina Elec",      "skill": [1],          "nivel": 3, "cost": 90,  "max_ore": 8},
+        {"id": 4, "nume": "Radu Tinich",     "skill": [3],          "nivel": 2, "cost": 70,  "max_ore": 8},
+        {"id": 5, "nume": "Vlad Univ",       "skill": [0, 2, 3],    "nivel": 2, "cost": 75,  "max_ore": 8},
+
+        # --- INCEPATORI / JUNIORI (Ieftini) ---
+        {"id": 6, "nume": "Dorel",           "skill": [0, 2],       "nivel": 1, "cost": 40,  "max_ore": 8},
+        {"id": 7, "nume": "Marius App",      "skill": [3],          "nivel": 1, "cost": 35,  "max_ore": 8},
+        {"id": 8, "nume": "Elena Jr",        "skill": [1],          "nivel": 2, "cost": 50,  "max_ore": 8},
+        {"id": 9, "nume": "Petre Ulei",      "skill": [0],          "nivel": 1, "cost": 30,  "max_ore": 8},
+    ]
+
+    # GRAD DIFICULTATE: 1=Usor, 2=Mediu, 3=Greu
+    raw_tasks = [
+        # --- MOTOARE & MECANICA ---
+        {"nume": "Audi - Distributie",    "skill_req": 2, "grad_dificultate": 3, "ore": 7},  # Task MARE (Split)
+        {"nume": "Mercedes - Cutie",      "skill_req": 2, "grad_dificultate": 3, "ore": 8},  # Task MARE (Split)
+        {"nume": "Golf - Schimb Ulei",    "skill_req": 0, "grad_dificultate": 1, "ore": 1},
+        {"nume": "Renault - Injectoare",  "skill_req": 2, "grad_dificultate": 2, "ore": 3},
+
+        # --- ELECTRONICA ---
+        {"nume": "BMW - ECU Defect",      "skill_req": 1, "grad_dificultate": 3, "ore": 4},
+        {"nume": "Tesla - Senzori",       "skill_req": 1, "grad_dificultate": 2, "ore": 2},
+        {"nume": "Opel - Alternator",     "skill_req": 1, "grad_dificultate": 2, "ore": 3},
+        {"nume": "Dacia - Reset Soft",    "skill_req": 1, "grad_dificultate": 1, "ore": 1},
+
+        # --- CAROSERIE ---
+        {"nume": "Ford - Vopsire Bara",   "skill_req": 3, "grad_dificultate": 2, "ore": 3},
+        {"nume": "VW - Indreptare Aripa", "skill_req": 3, "grad_dificultate": 2, "ore": 5},  # Task MARE (Split)
+        {"nume": "Porsche - Polish",      "skill_req": 3, "grad_dificultate": 3, "ore": 4},
+
+        # --- REVIZII SIMPLE ---
+        {"nume": "Skoda - Placute",       "skill_req": 0, "grad_dificultate": 1, "ore": 2},
+        {"nume": "Fiat - Filtre",         "skill_req": 0, "grad_dificultate": 1, "ore": 1},
+        {"nume": "Logan - Revizie",       "skill_req": 0, "grad_dificultate": 1, "ore": 2},
+    ]
+
+    # LOGICA DE SPARGERE (Split) aplicata pe date
+    for t in raw_tasks:
+        ore_totale = t["ore"]
+        skill_req = t["skill_req"]
+        dificultate = t["grad_dificultate"]
+
+        # Daca task-ul e mare (> 4 ore), il spargem in doua
+        if ore_totale > 4:
+            ore_p1 = ore_totale // 2
+            ore_p2 = ore_totale - ore_p1
+
+            tasks_noi.append({
+                "nume": f"{t['nume']} (P1)", "skill_req": skill_req, "grad_dificultate": dificultate, "ore": ore_p1
+            })
+            tasks_noi.append({
+                "nume": f"{t['nume']} (P2)", "skill_req": skill_req, "grad_dificultate": dificultate, "ore": ore_p2
+            })
+        else:
+            tasks_noi.append({
+                "nume": t["nume"], "skill_req": skill_req, "grad_dificultate": dificultate, "ore": ore_totale
+            })
+
+    return mecanici_noi, tasks_noi
+
+MECANICI, TASKS = get_date_manuale()
+
+def afiseaza_mecanici():
+    print(f"\n--- LISTA MECANICI DISPONIBILI ({len(MECANICI)}) ---")
+    print(f"{'ID':<4} | {'NUME':<15} | {'NIVEL':<6} | {'COST/H':<8} | {'COMPETENTE (SKILLS)'}")
+    print("-" * 80)
+
+    for m in MECANICI:
+        nume_skills = [SKILL_NAMES[s] for s in m["skill"]]
+        str_skills = ", ".join(nume_skills)
+        print(f"{m['id']:<4} | {m['nume']:<15} | {m['nivel']:<6} | {m['cost']:<8} | {str_skills}")
+    print("-" * 80 + "\n")
+
+
+# Parametri Algoritm Genetic
+POP_SIZE = 100
+GENERATIONS = 200
+MUTATION_RATE = 0.15
+
+# 2. COMPONENTELE ALGORITMULUI GENETIC
+
+def init_population():
+    #Aici se creaza indivizii
+    return [[random.randint(0, len(MECANICI) - 1) for _ in range(len(TASKS))] for _ in range(POP_SIZE)]
+
+
+def calculate_costs(individual): # Se creaza cost + penalizare
+    total_cost = 0
+    penalizari = 0
+    ore_mecanici = {m["id"]: 0 for m in MECANICI}
+
+    for task_idx, mec_id in enumerate(individual):
+        mecanic = MECANICI[mec_id]
+        task = TASKS[task_idx]
