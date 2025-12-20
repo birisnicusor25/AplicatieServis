@@ -33,7 +33,7 @@ def get_date_manuale():
     raw_tasks = [
         # --- MOTOARE & MECANICA ---
         {"nume": "Audi - Distributie",    "skill_req": 2, "grad_dificultate": 3, "ore": 7},  # Task MARE (Split)
-        {"nume": "Mercedes - Cutie",      "skill_req": 2, "grad_dificultate": 3, "ore": 8},  # Task MARE (Split)
+        {"nume": "Mercedes - Cutie",      "skill_req": 2, "grad_dificultate": 3, "ore": 8},  
         {"nume": "Golf - Schimb Ulei",    "skill_req": 0, "grad_dificultate": 1, "ore": 1},
         {"nume": "Renault - Injectoare",  "skill_req": 2, "grad_dificultate": 2, "ore": 3},
 
@@ -103,7 +103,6 @@ def init_population():
     #Aici se creaza indivizii
     return [[random.randint(0, len(MECANICI) - 1) for _ in range(len(TASKS))] for _ in range(POP_SIZE)]
 
-
 def calculate_costs(individual): # Se creaza cost + penalizare
     total_cost = 0
     penalizari = 0
@@ -131,7 +130,6 @@ def calculate_costs(individual): # Se creaza cost + penalizare
 
     return total_cost, penalizari
 
-
 def fitness(individual): #Se genereaza scorul fitness
     cost, pen = calculate_costs(individual)
     return 1 / (cost + pen + 1)
@@ -148,14 +146,13 @@ def crossover(p1, p2): #se taie genele parintilor in 2 (x/y)(a/b) si se ia cate 
     c2 = p2[:point] + p1[point:]
     return c1, c2
 
-
 def mutate(individual): # se creaza o fluctuatie a genelor pt ca genele sa nu ramana aceleasi
     if random.random() < MUTATION_RATE:
         idx = random.randint(0, len(TASKS) - 1)
         individual[idx] = random.randint(0, len(MECANICI) - 1)
     return individual
 
-# 3. MOTORUL ALGORITMULUI (Execution Loop)
+# 3. MOTORUL ALGORITMULUI 
 
 def run_genetic_algorithm():
     population = init_population()
@@ -198,3 +195,64 @@ def run_benchmarking():
     best_ga = run_genetic_algorithm()
     duration_ga = time.time() - start_time
     cost_ga, pen_ga = calculate_costs(best_ga)
+    # AFISARE REZULTATE FINALE
+    print("\n" + "-" * 55)
+    print(f"TIMP EXECUTIE: {duration_ga:.4f} secunde")
+    print(f"COST TOTAL MANOPERA: {cost_ga} LEI")
+    print("-" * 55)
+
+    print(f"✅ STATUS: SOLUTIE OPTIMIZATA GENERATA CU SUCCES.")
+    if pen_ga > 0:
+        print(f"   Nota: S-au efectuat compromisuri de nivel pentru eficienta ({pen_ga} pen).")
+    else:
+        print(f"   Nota: Solutie ideala (Fara compromisuri).")
+
+    # 5. Afisare Detaliata
+    ore_finale = {m["id"]: 0 for m in MECANICI}
+
+    if len(TASKS) <= 100:
+        print("\n--- REPARTIZARE DETALIATA A SARCINILOR ---")
+        print(f"{'SARCINA':<35} | {'CERINTA':<12} | {'MECANIC ALOCAT':<25} | {'COST':<10} | {'STATUS'}")
+        print("-" * 110)
+
+        for i, mid in enumerate(best_ga):
+            task = TASKS[i]
+            mec = MECANICI[mid]
+
+            ore_finale[mid] += task["ore"]
+            cost_linie = task["ore"] * mec["cost"]
+
+            skill_req_name = SKILL_NAMES[task["skill_req"]]
+            mec_skills_names = [SKILL_NAMES[s] for s in mec["skill"]]
+
+            # Construim textul
+            sarcina_txt = f"{task['nume']} (Dif:{task['grad_dificultate']})"
+            mecanic_txt = f"{mec['nume']} (Lvl:{mec['nivel']})"
+            cost_txt = f"{cost_linie} LEI"
+
+            # Validare inteligenta
+            if task["skill_req"] not in mec["skill"]:
+                valid = "❌ Lipsa Skill"
+            elif task["grad_dificultate"] > mec["nivel"]:
+                valid = "⚠️ Nivel Mic"
+            else:
+                valid = "✅ OK"
+
+            print(f"{sarcina_txt:<35} | {skill_req_name:<12} | {mecanic_txt:<25} | {cost_txt:<10} | {valid}")
+
+    # 6. Afisare Incarcare
+    print("\n--- RAPORT INCARCARE MECANICI ---")
+    for mid, ore in ore_finale.items():
+        limita = MECANICI[mid]['max_ore']
+
+        if ore > limita:
+            status_ore = f"⚠️ ({ore - limita}h extra)"
+        else:
+            status_ore = ""
+
+        if ore > 0:
+            print(f"{MECANICI[mid]['nume']:<15}: {ore} ore / {limita} max  {status_ore}")
+
+
+if __name__ == "__main__":
+    run_benchmarking()
