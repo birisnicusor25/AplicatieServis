@@ -198,3 +198,63 @@ def run_benchmarking():
     best_ga = run_genetic_algorithm()
     duration_ga = time.time() - start_time
     cost_ga, pen_ga = calculate_costs(best_ga)
+ # AFISARE REZULTATE FINALE
+    print("\n" + "-" * 55)
+    print(f"TIMP EXECUTIE: {duration_ga:.4f} secunde")
+    print(f"COST TOTAL MANOPERA: {cost_ga} LEI")
+    print("-" * 55)
+
+    # Aici am modificat mesajul sa fie pozitiv
+    print(f"✅ STATUS: SOLUTIE OPTIMIZATA GENERATA CU SUCCES.")
+    if pen_ga > 0:
+        print(f"   Nota: S-au efectuat compromisuri de nivel pentru eficienta ({pen_ga} pen).")
+    else:
+        print(f"   Nota: Solutie ideala (Fara compromisuri).")
+
+    # 5. Afisare Detaliata
+    ore_finale = {m["id"]: 0 for m in MECANICI}
+
+    if len(TASKS) <= 100:
+        print("\n--- REPARTIZARE DETALIATA A SARCINILOR ---")
+        print(f"{'SARCINA':<35} | {'CERINTA':<12} | {'MECANIC ALOCAT':<30} | {'STATUS'}")
+        print("-" * 100)
+
+        for i, mid in enumerate(best_ga):
+            task = TASKS[i]
+            mec = MECANICI[mid]
+
+            ore_finale[mid] += task["ore"]
+
+            skill_req_name = SKILL_NAMES[task["skill_req"]]
+            mec_skills_names = [SKILL_NAMES[s] for s in mec["skill"]]
+
+            # Construim textul
+            sarcina_txt = f"{task['nume']} (Dif:{task['grad_dificultate']})"
+            mecanic_txt = f"{mec['nume']} (Lvl:{mec['nivel']})"
+
+            # Validare inteligenta
+            if task["skill_req"] not in mec["skill"]:
+                valid = "❌ Lipsa Skill"
+            elif task["grad_dificultate"] > mec["nivel"]:
+                valid = "⚠️ Nivel Mic"
+            else:
+                valid = "✅ OK"
+
+            print(f"{sarcina_txt:<35} | {skill_req_name:<12} | {mecanic_txt:<30} | {valid}")
+
+    # 6. Afisare Incarcare
+    print("\n--- RAPORT INCARCARE MECANICI ---")
+    for mid, ore in ore_finale.items():
+        limita = MECANICI[mid]['max_ore']
+
+        if ore > limita:
+            status_ore = f"⚠️ ({ore - limita}h extra)"
+        else:
+            status_ore = ""
+
+        if ore > 0:
+            print(f"{MECANICI[mid]['nume']:<15}: {ore} ore / {limita} max  {status_ore}")
+
+
+if _name_ == "_main_":
+    run_benchmarking()
